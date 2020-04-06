@@ -1,13 +1,26 @@
 "ui";
 importClass(android.view.View);
-var tikuCommon = require("./tikuCommon.js");
+let tikuCommon = require("./tikuCommon.js");
 let deviceWidth = device.width;
 
 let margin = parseInt(deviceWidth * 0.02);
 
 //记录集数组 重要！！！
 let qaArray = [];
+//设置本地存储
+let appVersion = "2.5.6";
+let storage = storages.create("LazyStudy");
+if (!storage.contains("delayedTime") || parseInt(storage.get("delayedTime")) < 1) {
+    storage.put("delayedTime", 1);
+}
+if (!storage.contains("browseWithCSC") || typeof (storage.get("browseWithCSC")) != "boolean") {
+    storage.put("browseWithCSC", false);
+}
 
+//答题延迟时间
+let delayedTime = storage.get("delayedTime");
+//三连开关
+let browseWithCSC = storage.get("browseWithCSC");
 
 ui.layout(
     <drawer id="drawer">
@@ -19,7 +32,18 @@ ui.layout(
             <viewpager id="viewpager">
                 <frame>
                     <img src="https://cdn.mom1.cn/?mom=302" scaleType="centerCrop" alpha="0.3" />
-                    <button id="showFloating" text="打开悬浮窗" w="150" h="60" circle="true" layout_gravity="center" style="Widget.AppCompat.Button.Colored" />
+                    <vertical gravity="center">
+                        <horizontal gravity="center">
+                            <text text="答题延时：" />
+                            <input id="delayedTime" text={delayedTime} />
+                            <text text="秒" />
+                        </horizontal>
+                        <horizontal gravity="center">
+                            <text text="浏览同时收藏分享评论：" />
+                            <Switch id="browseWithCSC" checked={browseWithCSC} />
+                        </horizontal>
+                        <button id="showFloating" text="打开悬浮窗" w="150" h="60" circle="true" layout_gravity="center" style="Widget.AppCompat.Button.Colored" />
+                    </vertical>
                 </frame>
                 <frame>
                     <vertical>
@@ -73,12 +97,34 @@ ui.layout(
 );
 
 //标签名
-ui.viewpager.setTitles(["功能", "题库", "帮助与更新"]);
+ui.viewpager.setTitles(["功能", "题库", "程序介绍"]);
 //联动
 ui.tabs.setupWithViewPager(ui.viewpager);
+//选项菜单右上角
+ui.emitter.on("create_options_menu", menu => {
+    menu.add("检查更新");
+    menu.add("关于");
+});
+ui.emitter.on("options_item_selected", (e, item) => {
+    switch (item.getTitle()) {
+        case "检查更新":
+            threads.shutDownAll();
+            threads.start(function () {
+                checkUpdate(appVersion);
+            });
+            //app.openUrl("https://glare.now.sh/lgpersonal/LazyStudy/LazyStudy");
+            break;
+        case "关于":
+            alert("关于", "当前版本 " + appVersion);
+            break;
+
+    }
+    e.consumed = true;
+});
+activity.setSupportActionBar(ui.toolbar);
 
 //帮助页加载
-var src = "https://github.com/lgpersonal/LazyStudy/blob/master/README.md";
+let src = "https://github.com/lgpersonal/LazyStudy/blob/master/README.md";
 ui.webview.loadUrl(src);
 
 //进度条不可见
@@ -88,6 +134,18 @@ ui.run(() => {
 
 //加载悬浮窗
 ui.showFloating.click(() => {
+    //获取UI中输入值
+    let uiDelayedTime = parseInt(ui.delayedTime.getText());
+    let uiBrowseWithCSC = ui.browseWithCSC.checked;
+    //判断并存储
+    if (uiDelayedTime >= 0 && uiDelayedTime != delayedTime) {
+        storage.put("delayedTime", uiDelayedTime);
+    }
+    if (uiBrowseWithCSC != browseWithCSC) {
+        storage.put("browseWithCSC", uiBrowseWithCSC);
+    }
+    console.log("延迟时间: " + storage.get("delayedTime"));
+    console.log("三连开关: " + storage.get("browseWithCSC"));
     engines.execScriptFile("floating.js");
 });
 
@@ -105,14 +163,14 @@ ui.search.click(() => {
     //查询开始
     threads.start(function () {
         if (ui.keyword.getText() != "") {
-            var keyw = ui.keyword.getText();
+            let keyw = ui.keyword.getText();
             if (ui.rbQuestion.checked) {//按题目搜
-                var sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "question", keyw);
+                let sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "question", keyw);
             } else {//按答案搜
-                var sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "answer", keyw);
+                let sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "answer", keyw);
             }
             qaArray = tikuCommon.searchDb(keyw, "tiku", sqlStr);
-            var qCount = qaArray.length;
+            let qCount = qaArray.length;
             if (qCount > 0) {
                 ui.run(() => {
                     ui.question.setText(qaArray[0].question);
@@ -135,9 +193,9 @@ ui.search.click(() => {
 //最近十条
 ui.lastTen.click(() => {
     threads.start(function () {
-        var keyw = ui.keyword.getText();
+        let keyw = ui.keyword.getText();
         qaArray = tikuCommon.searchDb(keyw, "", "SELECT question,answer FROM tiku ORDER BY rowid DESC limit 10");
-        var qCount = qaArray.length;
+        let qCount = qaArray.length;
         if (qCount > 0) {
             //toastLog(qCount);
             ui.run(() => {
@@ -159,7 +217,7 @@ ui.lastTen.click(() => {
 ui.prev.click(() => {
     threads.start(function () {
         if (qaArray.length > 0) {
-            var qIndex = parseInt(ui.questionIndex.getText()) - 1;
+            let qIndex = parseInt(ui.questionIndex.getText()) - 1;
             if (qIndex > 0) {
                 ui.run(() => {
                     ui.question.setText(qaArray[qIndex - 1].question);
@@ -180,7 +238,7 @@ ui.next.click(() => {
     threads.start(function () {
         if (qaArray.length > 0) {
             //toastLog(qaArray);
-            var qIndex = parseInt(ui.questionIndex.getText()) - 1;
+            let qIndex = parseInt(ui.questionIndex.getText()) - 1;
             if (qIndex < qaArray.length - 1) {
                 //toastLog(qIndex);
                 //toastLog(qaArray[qIndex + 1].question);
@@ -202,11 +260,11 @@ ui.next.click(() => {
 ui.update.click(() => {
     threads.start(function () {
         if (ui.question.getText() && qaArray.length > 0 && parseInt(ui.questionIndex.getText()) > 0) {
-            var qIndex = parseInt(ui.questionIndex.getText()) - 1;
-            var questionOld = qaArray[qIndex].question;
-            var questionStr = ui.question.getText();
-            var answerStr = ui.answer.getText();
-            var sqlstr = "UPDATE tiku SET question = '" + questionStr + "' , answer = '" + answerStr + "' WHERE question=  '" + questionOld + "'";
+            let qIndex = parseInt(ui.questionIndex.getText()) - 1;
+            let questionOld = qaArray[qIndex].question;
+            let questionStr = ui.question.getText();
+            let answerStr = ui.answer.getText();
+            let sqlstr = "UPDATE tiku SET question = '" + questionStr + "' , answer = '" + answerStr + "' WHERE question=  '" + questionOld + "'";
             tikuCommon.executeSQL(sqlstr);
         } else {
             toastLog("请先查询");
@@ -218,9 +276,9 @@ ui.update.click(() => {
 ui.delete.click(() => {
     threads.start(function () {
         if (qaArray.length > 0 && parseInt(ui.questionIndex.getText()) > 0) {
-            var qIndex = parseInt(ui.questionIndex.getText()) - 1;
-            var questionOld = qaArray[qIndex].question;
-            var sqlstr = "DELETE FROM tiku WHERE question = '" + questionOld + "'";
+            let qIndex = parseInt(ui.questionIndex.getText()) - 1;
+            let questionOld = qaArray[qIndex].question;
+            let sqlstr = "DELETE FROM tiku WHERE question = '" + questionOld + "'";
             tikuCommon.executeSQL(sqlstr);
         } else {
             toastLog("请先查询");
@@ -232,9 +290,9 @@ ui.delete.click(() => {
 ui.insert.click(() => {
     threads.start(function () {
         if (ui.question.getText() != "" && ui.answer.getText() != "") {
-            var questionStr = ui.question.getText();
-            var answerStr = ui.answer.getText();
-            var sqlstr = "INSERT INTO tiku VALUES ('" + questionStr + "','" + answerStr + "','')";
+            let questionStr = ui.question.getText();
+            let answerStr = ui.answer.getText();
+            let sqlstr = "INSERT INTO tiku VALUES ('" + questionStr + "','" + answerStr + "','')";
             tikuCommon.executeSQL(sqlstr);
         } else {
             toastLog("请先输入 问题 答案");
@@ -242,9 +300,6 @@ ui.insert.click(() => {
     });
 });
 
-function reset() {
-    
-}
 //重置
 ui.reset.click(() => {
     threads.shutDownAll();
@@ -279,11 +334,11 @@ ui.updateTikuNet.click(() => {
                 ui.resultLabel.setText("正在更新网络题库...");
                 ui.pbar.setVisibility(View.VISIBLE);
             });
-            var ss = "./updateTikuNet.js";
+            let ss = "./updateTikuNet.js";
             let begin = require(ss);
-            var resultNum = begin();
-            var resultStr = "更新" + resultNum + "道题！";            
-            ui.run(() => {                
+            let resultNum = begin();
+            let resultStr = "更新" + resultNum + "道题！";
+            ui.run(() => {
                 ui.resultLabel.setText("");
                 ui.pbar.setVisibility(View.INVISIBLE);
                 ui.resultLabel.setVisibility(View.INVISIBLE);
@@ -291,4 +346,32 @@ ui.updateTikuNet.click(() => {
             alert(resultStr);
         });
     }
+});
+
+//
+function checkUpdate(appVersion) {
+    //let appVersion = "2.5.4"
+    let r = http.get("https://api.github.com/repos/lgpersonal/LazyStudy/releases/latest");
+    let rjson = r.body.json();
+    let remoteAppVersion = rjson.tag_name;
+    let remoteAppDownloadUrl = rjson.assets[0].browser_download_url;
+    if (appVersion != remoteAppVersion && remoteAppDownloadUrl != "") {
+        // toastLog("发现新版本: " + remoteAppVersion + "\n下载地址: " + remoteAppDownloadUrl);
+        dialogs.build({
+            title: "发现新版本",
+            content: remoteAppVersion,
+            positive: "更新",
+            negative: "取消"
+        })
+            .on("positive", ()=>{
+                app.openUrl(remoteAppDownloadUrl);
+            })
+            .show();
+    } else {
+        alert("已经是最新版本 " + appVersion);
+    }
+};
+
+threads.start(function () {
+    checkUpdate(appVersion);
 });

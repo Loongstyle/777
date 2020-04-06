@@ -1,9 +1,9 @@
-var tikuCommon = require("./tikuCommon.js");
+let tikuCommon = require("./tikuCommon.js");
 
 //显示对号悬浮窗
 function drawfloaty(x, y) {
     //floaty.closeAll();
-    var window = floaty.window(
+    let window = floaty.window(
         <frame gravity="center">
             <text id="text" text="✔" textColor="red" />
         </frame>
@@ -13,11 +13,12 @@ function drawfloaty(x, y) {
 }
 
 
-function doChallengeAnswer() {
+function doChallengeAnswer(delayedTime) {
     let hasError = false;
+    let _timu=null;
     //提取题目
     if (className("android.widget.ListView").exists()) {
-        var _timu = className("android.widget.ListView").findOnce().parent().child(0).desc();
+        _timu = className("android.widget.ListView").findOnce().parent().child(0).desc();
     } else {
 
         toastLog("提取题目失败");
@@ -25,18 +26,18 @@ function doChallengeAnswer() {
         return;
     }
 
-    var chutiIndex = _timu.lastIndexOf("出题单位");
+    let chutiIndex = _timu.lastIndexOf("出题单位");
     if (chutiIndex != -1) {
         _timu = _timu.substring(0, chutiIndex - 2);
     }
-    var timuOld = _timu;
+    //let timuOld = _timu;
     _timu = _timu.replace(/\s/g, "");
 
     //提取答案列表选项
-    var ansTimu = [];
+    let ansTimu = [];
     if (className("android.widget.ListView").exists()) {
         className("android.widget.ListView").findOne().children().forEach(child => {
-            var answer_q = child.child(0).child(1).desc();
+            let answer_q = child.child(0).child(1).desc();
             ansTimu.push(answer_q);
         });
     } else {
@@ -45,8 +46,8 @@ function doChallengeAnswer() {
         return;
     }
 
-    var ansSearchArray = [];//tiku表答案数组
-    var answerArray = [];//答案临时数组
+    let ansSearchArray = [];//tiku表答案数组
+    let answerArray = [];//答案临时数组
 
     //获得答案数组
     ansSearchArray = tikuCommon.searchTiku(_timu);
@@ -63,31 +64,33 @@ function doChallengeAnswer() {
         answerArray = ansSearchArray;
     }
 
-    var answer = "";
+    let answer = "";
     //对答案数组逐项点击
-    for (var i = 0, len = answerArray.length; i < len; i++) {
+    for (let i = 0, len = answerArray.length; i < len; i++) {
         answer = answerArray[i].answer.replace(/(^\s*)|(\s*$)/g, "");//去除前后空格，解决历史遗留问题
         if (/^[a-zA-Z]{1}$/.test(answer)) { //如果为ABCD形式
-            var indexAns = tikuCommon.indexFromChar(answer.toUpperCase());
+            let indexAns = tikuCommon.indexFromChar(answer.toUpperCase());
             answer = ansTimu[indexAns];
         }
         toastLog("answer = " + answer);
         sleep(300);
         //开始点击
-        var hasClicked = false;
-        var listArray = className("ListView").findOnce().children();
-        var clickAns = "";
+        let hasClicked = false;
+        let listArray = className("ListView").findOnce().children();
+        let clickAns = "";
         //for(ans of answer){//答案数组逐个匹配
         listArray.forEach(item => {
-            var listDescStr = item.child(0).child(1).desc();
+            let listDescStr = item.child(0).child(1).desc();
             if (listDescStr == answer) {
                 clickAns = answer;
                 //显示 对号
-                var b = item.child(0).bounds();
-                var tipsWindow = drawfloaty(b.left, b.top);
+                let b = item.child(0).bounds();
+                let tipsWindow = drawfloaty(b.left, b.top);
                 //随机时长点击
-                var delayTime=(parseInt(Math.random()*5,10)+1)*100;
-                sleep(300+delayTime);
+                //let delayTime=(parseInt(Math.random()*5,10)+1)*100;
+                //sleep(300+delayTime);
+                //延时点击
+                sleep(delayedTime*1000);
                 //点击
                 item.child(0).click();
                 hasClicked = true;
@@ -107,14 +110,14 @@ function doChallengeAnswer() {
     //写库
     if (className("android.view.View").descContains("本次答对").exists() == false) { //如果答对，插入记录
         if (ansSearchArray.length == 0 && clickAns != "") {
-            var sqlstr = "INSERT INTO tiku VALUES ('" + _timu + "','" + clickAns + "','')";
+            let sqlstr = "INSERT INTO tiku VALUES ('" + _timu + "','" + clickAns + "','')";
             tikuCommon.executeSQL(sqlstr);
         }
     } else { //tiku表中有，但答错，删除错误记录
         if (ansSearchArray.length > 0 && hasError == false) {
             //删掉这条
             toastLog("删除答案: " + answer);
-            var sqlstr = "DELETE FROM tiku WHERE question LIKE '" + _timu + "'";
+            let sqlstr = "DELETE FROM tiku WHERE question LIKE '" + _timu + "'";
             tikuCommon.executeSQL(sqlstr);
         }
     }
@@ -122,12 +125,17 @@ function doChallengeAnswer() {
 }
 
 function main() {
+    let storage = storages.create("LazyStudy");
+    if (!storage.contains("delayedTime") || parseInt(storage.get("delayedTime"))<1) {
+        storage.put("delayedTime", 1);
+    }
+    let delayedTime=storage.get("delayedTime");
     while (true) {
         if (className("android.view.View").desc("挑战答题").exists()) {
             className("android.view.View").desc("挑战答题").click();
             sleep(3000);
         }
-        doChallengeAnswer();
+        doChallengeAnswer(delayedTime);
         sleep(1000);
     }
 }

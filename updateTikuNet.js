@@ -13,34 +13,34 @@ importClass(android.database.sqlite.SQLiteDatabase);
  */
 function CreateAndInsert(liArray){
     
-    var dbName = "tiku.db";
+    let dbName = "tiku.db";
     //文件路径
-    var path = files.path(dbName);
+    let path = files.path(dbName);
     //确保文件存在
     if (!files.exists(path)) {
         files.createWithDirs(path);
     }
     //创建或打开数据库
-    var db = SQLiteDatabase.openOrCreateDatabase(path, null);
-    var createTable = "\
+    let db = SQLiteDatabase.openOrCreateDatabase(path, null);
+    let createTable = "\
     CREATE TABLE IF NOt EXISTS tikuNet(\
     question CHAR(253),\
     answer CHAR(100)\
     );";
-    var cleanTable = "DELETE FROM tikuNet";
+    let cleanTable = "DELETE FROM tikuNet";
     db.execSQL(createTable);
     db.execSQL(cleanTable);
     log("创建打开清空表tikuNet!");
 
-    var sql = "INSERT INTO tikuNet (question, answer) VALUES (?, ?)";
+    let sql = "INSERT INTO tikuNet (question, answer) VALUES (?, ?)";
     db.beginTransaction();
-    var stmt = db.compileStatement(sql);
-    for (var li = 0, len = liArray.size(); li < len; li++) {
+    let stmt = db.compileStatement(sql);
+    for (let li = 0, len = liArray.size(); li < len; li++) {
         //log("题目："+li.text());
-        var liText = liArray.get(li).text();
-        var timuPos=liText.indexOf("】")+1;
-        var tiMu=liText.substring(timuPos).replace(/_/g, "");
-        var daAn = liArray.get(li).select("b").first().text();
+        let liText = liArray.get(li).text();
+        let timuPos=liText.indexOf("】")+1;
+        let tiMu=liText.substring(timuPos).replace(/_/g, "");
+        let daAn = liArray.get(li).select("b").first().text();
         log(util.format("题目:%s\n答案:%s"),tiMu,daAn);
         stmt.bindString(1, tiMu);
         stmt.bindString(2, daAn);
@@ -58,9 +58,9 @@ function CreateAndInsert(liArray){
  */
 function updateTikunet() {
     log("开始更新数据库...");
-    var htmlString = Jsoup.connect("http://49.235.90.76:5000").maxBodySize(0).timeout(10000).get();
-    var htmlArray = Jsoup.parse(htmlString);
-    var liArray = htmlArray.select("li:has(b)");
+    let htmlString = Jsoup.connect("http://49.235.90.76:5000").maxBodySize(0).timeout(10000).get();
+    let htmlArray = Jsoup.parse(htmlString);
+    let liArray = htmlArray.select("li:has(b)");
     log(util.format("题库数目%s\n"), liArray.size());    
     //执行更新
     if(CreateAndInsert(liArray))
