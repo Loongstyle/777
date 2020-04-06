@@ -1,16 +1,16 @@
 {
   "assets": [],
   "build": {
-    "build_id": "F0D7DB7B-89",
-    "build_number": 89,
-    "build_time": 1585805637159
+    "build_id": "D96D117D-92",
+    "build_number": 92,
+    "build_time": 1586150949786
   },
   "useFeatures": [],
   "icon": "res/logo.png",
   "main": "main.js",
   "name": "懒人学习",
-  "packageName": "com.lazyStudy",
+  "packageName": "com.lazystudy",
   "scripts": {},
   "versionCode": 2,
-  "versionName": "2.5.5"
+  "versionName": "2.5.6"
 }

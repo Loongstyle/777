@@ -5,10 +5,10 @@ let window = floaty.window(
     <vertical>
         <button id="move" text=" 移动 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
         <button id="switchXX" text=" 切到 强国 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
-        <button id="startLL" text=" 开始浏览 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
-        <button id="startSFP" text=" 收藏分享评论 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
-        <button id="startDT" text=" 挑战答题 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
-        <button id="startMR" text=" 每日答题等 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
+        <button id="startBrowse" text=" 开始浏览 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
+        <button id="startCSC" text=" 收藏分享评论 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
+        <button id="startChallengeAnswer" text=" 挑战答题 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
+        <button id="startDailyAnswer" text=" 每日答题等 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
         <button id="stop" text=" 停止 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
         <button id="exit" text=" 退出悬浮窗 " w="90" h="35" bg="#77ffffff" textSize="10sp" />
     </vertical>
@@ -65,22 +65,22 @@ window.exit.click(() => {
 let th = null;
 
 //浏览
-window.startLL.click(() => {
+window.startBrowse.click(() => {
     let ss = "./xxqg_v3.1.0(无UI).js";
     startTh(ss);
 });
 //收藏评论分享
-window.startSFP.click(() => {
-    let ss = "./collectCommentShare.js";
+window.startCSC.click(() => {
+    let ss = "./collectShareComment.js";
     startTh(ss);
 });
 //挑战答题
-window.startDT.click(() => {
+window.startChallengeAnswer.click(() => {
     let ss = "./challengeAnswer.js";
     startTh(ss);
 });
 //每日答题
-window.startMR.click(() => {
+window.startDailyAnswer.click(() => {
     let ss = "./dailyAnswer.js";
     startTh(ss);
 });
@@ -99,7 +99,7 @@ window.stop.click(() => {
 });
 
 function startTh(fileStr){
-    var ss=fileStr;
+    let ss=fileStr;
     if (th == null) {
         th = threads.start(function () {
             toastLog(" 开启线程");
