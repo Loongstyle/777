@@ -110,7 +110,7 @@ ui.emitter.on("options_item_selected", (e, item) => {
         case "检查更新":
             threads.shutDownAll();
             threads.start(function () {
-                checkUpdate(appVersion);
+                checkUpdate(appVersion,true);
             });
             //app.openUrl("https://glare.now.sh/lgpersonal/LazyStudy/LazyStudy");
             break;
@@ -349,7 +349,7 @@ ui.updateTikuNet.click(() => {
 });
 
 //
-function checkUpdate(appVersion) {
+function checkUpdate(appVersion, alertFlag) {
     //let appVersion = "2.5.4"
     let r = http.get("https://api.github.com/repos/lgpersonal/LazyStudy/releases/latest");
     let rjson = r.body.json();
@@ -363,15 +363,16 @@ function checkUpdate(appVersion) {
             positive: "更新",
             negative: "取消"
         })
-            .on("positive", ()=>{
+            .on("positive", () => {
                 app.openUrl(remoteAppDownloadUrl);
             })
             .show();
-    } else {
+    };
+    if (appVersion == remoteAppVersion && alertFlag) {
         alert("已经是最新版本 " + appVersion);
-    }
+    };
 };
 
 threads.start(function () {
-    checkUpdate(appVersion);
+    checkUpdate(appVersion, false);
 });
