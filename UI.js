@@ -8,7 +8,7 @@ let margin = parseInt(deviceWidth * 0.02);
 //记录集数组 重要！！！
 let qaArray = [];
 //设置本地存储
-let appVersion = "2.5.6";
+let appVersion = "2.5.6-1";
 let storage = storages.create("LazyStudy");
 if (!storage.contains("delayedTime") || parseInt(storage.get("delayedTime")) < 1) {
     storage.put("delayedTime", 1);
@@ -164,10 +164,11 @@ ui.search.click(() => {
     threads.start(function () {
         if (ui.keyword.getText() != "") {
             let keyw = ui.keyword.getText();
+            let sqlStr=null;
             if (ui.rbQuestion.checked) {//按题目搜
-                let sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "question", keyw);
+                sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "question", keyw);
             } else {//按答案搜
-                let sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "answer", keyw);
+                sqlStr = util.format("SELECT question,answer FROM tiku WHERE %s LIKE '%%%s%'", "answer", keyw);
             }
             qaArray = tikuCommon.searchDb(keyw, "tiku", sqlStr);
             let qCount = qaArray.length;
