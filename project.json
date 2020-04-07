@@ -1,9 +1,9 @@
 {
   "assets": [],
   "build": {
-    "build_id": "D96D117D-92",
-    "build_number": 92,
-    "build_time": 1586150949786
+    "build_id": "5450574B-95",
+    "build_number": 95,
+    "build_time": 1586215732554
   },
   "useFeatures": [],
   "icon": "res/logo.png",
@@ -12,5 +12,4 @@
   "packageName": "com.lazystudy",
   "scripts": {},
   "versionCode": 2,
-  "versionName": "2.5.6"
-}
+  "versionName": "2.5.6-1"
